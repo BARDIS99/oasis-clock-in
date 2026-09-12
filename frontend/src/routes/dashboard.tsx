@@ -1,7 +1,50 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { StudentShell } from "@/components/student-shell";
+import { createServerFn } from "@tanstack/start";
 import { getSupabase } from "@/lib/supabase.server";
+
+// Server functions
+const loadGradesServer = createServerFn({ method: "GET" })
+  .validator((data: { studentId: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabase();
+    const { data: gradesData } = await supabase
+      .from("oasis_student_grades")
+      .select("*")
+      .eq("student_id", data.studentId)
+      .order("week_start", { ascending: false })
+      .limit(10);
+    return gradesData || [];
+  });
+
+const loadTicketsServer = createServerFn({ method: "GET" })
+  .validator((data: { studentId: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabase();
+    const { data: ticketsData } = await supabase
+      .from("oasis_support_tickets")
+      .select("*")
+      .eq("student_id", data.studentId)
+      .order("created_at", { ascending: false });
+    return ticketsData || [];
+  });
+
+const submitTicketServer = createServerFn({ method: "POST" })
+  .validator((data: { studentId: string; subject: string; message: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabase();
+    const { error } = await supabase.from("oasis_support_tickets").insert({
+      id: `ticket_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      student_id: data.studentId,
+      subject: data.subject,
+      message: data.message,
+      status: "open",
+      priority: "normal",
+    });
+    if (error) throw error;
+    return { success: true };
+  });
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
@@ -66,25 +109,13 @@ function DashboardPage() {
       }
 
       const student = JSON.parse(studentData);
-      const supabase = getSupabase();
 
-      // Load grades
-      const { data: gradesData } = await supabase
-        .from("oasis_student_grades")
-        .select("*")
-        .eq("student_id", student.id)
-        .order("week_start", { ascending: false })
-        .limit(10);
-
+      // Load grades via server function
+      const gradesData = await loadGradesServer({ data: { studentId: student.id } });
       if (gradesData) setGrades(gradesData);
 
-      // Load support tickets
-      const { data: ticketsData } = await supabase
-        .from("oasis_support_tickets")
-        .select("*")
-        .eq("student_id", student.id)
-        .order("created_at", { ascending: false });
-
+      // Load support tickets via server function
+      const ticketsData = await loadTicketsServer({ data: { studentId: student.id } });
       if (ticketsData) setTickets(ticketsData);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
@@ -103,23 +134,19 @@ function DashboardPage() {
       if (!studentData) return;
 
       const student = JSON.parse(studentData);
-      const supabase = getSupabase();
-
-      const { error } = await supabase.from("oasis_support_tickets").insert({
-        id: `ticket_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        student_id: student.id,
-        subject: supportForm.subject.trim(),
-        message: supportForm.message.trim(),
-        status: "open",
-        priority: "normal",
+      
+      await submitTicketServer({
+        data: {
+          studentId: student.id,
+          subject: supportForm.subject.trim(),
+          message: supportForm.message.trim(),
+        },
       });
 
-      if (!error) {
-        setSupportForm({ subject: "", message: "" });
-        setShowSupport(false);
-        await loadData();
-        alert("Support ticket submitted successfully!");
-      }
+      setSupportForm({ subject: "", message: "" });
+      setShowSupport(false);
+      await loadData();
+      alert("Support ticket submitted successfully!");
     } catch (error) {
       console.error("Failed to submit ticket:", error);
       alert("Failed to submit ticket. Please try again.");

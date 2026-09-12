@@ -1,7 +1,70 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { readAdminToken } from "@/lib/device";
+import { createServerFn } from "@tanstack/start";
 import { getSupabase } from "@/lib/supabase.server";
+
+// Server functions
+const loadTicketsServer = createServerFn({ method: "GET" })
+  .validator((data: { filter?: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabase();
+    let query = supabase
+      .from("oasis_support_tickets")
+      .select(`
+        *,
+        student:oasis_students(id, name, email, matric, clock_id)
+      `)
+      .order("created_at", { ascending: false });
+
+    if (data.filter && data.filter !== "all") {
+      query = query.eq("status", data.filter);
+    }
+
+    const { data: result, error } = await query;
+    if (error) throw error;
+    return result || [];
+  });
+
+const respondToTicketServer = createServerFn({ method: "POST" })
+  .validator((data: {
+    ticketId: string;
+    response: string;
+    adminId: string;
+    status: string;
+  }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabase();
+    const { error} = await supabase
+      .from("oasis_support_tickets")
+      .update({
+        admin_response: data.response,
+        responded_by: data.adminId,
+        responded_at: new Date().toISOString(),
+        status: data.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.ticketId);
+
+    if (error) throw error;
+    return { success: true };
+  });
+
+const updateTicketStatusServer = createServerFn({ method: "POST" })
+  .validator((data: { ticketId: string; status: string }) => data)
+  .handler(async ({ data }) => {
+    const supabase = getSupabase();
+    const { error } = await supabase
+      .from("oasis_support_tickets")
+      .update({
+        status: data.status,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.ticketId);
+
+    if (error) throw error;
+    return { success: true };
+  });
 
 export const Route = createFileRoute("/admin/support")({
   component: AdminSupportPage,
@@ -41,22 +104,7 @@ function AdminSupportPage() {
 
   async function loadTickets() {
     try {
-      const supabase = getSupabase();
-      let query = supabase
-        .from("oasis_support_tickets")
-        .select(`
-          *,
-          student:oasis_students(id, name, email, matric, clock_id)
-        `)
-        .order("created_at", { ascending: false });
-
-      if (filter !== "all") {
-        query = query.eq("status", filter);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
+      const data = await loadTicketsServer({ data: { filter } });
       setTickets(data as any);
     } catch (error) {
       console.error("Failed to load tickets:", error);
@@ -77,20 +125,15 @@ function AdminSupportPage() {
       if (!adminData) throw new Error("Not logged in");
 
       const admin = JSON.parse(adminData);
-      const supabase = getSupabase();
 
-      const { error } = await supabase
-        .from("oasis_support_tickets")
-        .update({
-          admin_response: responseText.trim(),
-          responded_by: admin.id,
-          responded_at: new Date().toISOString(),
+      await respondToTicketServer({
+        data: {
+          ticketId,
+          response: responseText.trim(),
+          adminId: admin.id,
           status,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", ticketId);
-
-      if (error) throw error;
+        },
+      });
 
       setResponseText("");
       setResponding(null);
@@ -106,16 +149,9 @@ function AdminSupportPage() {
 
   async function handleUpdateStatus(ticketId: string, newStatus: string) {
     try {
-      const supabase = getSupabase();
-      const { error } = await supabase
-        .from("oasis_support_tickets")
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", ticketId);
-
-      if (error) throw error;
+      await updateTicketStatusServer({
+        data: { ticketId, status: newStatus },
+      });
       await loadTickets();
     } catch (error) {
       console.error("Failed to update status:", error);
