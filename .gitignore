@@ -1,11 +1,10 @@
 # Dependencies
 node_modules/
-backend/node_modules/
 frontend/node_modules/
 
 # Environment — NEVER commit secrets
 .env
-backend/.env
+frontend/.env
 .env.local
 .env.production
 
@@ -17,18 +16,18 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# Build artefacts
+# Build artifacts
 dist/
 build/
 .cache/
 .output/
 .vercel/
 .nitro/
+.tanstack/
 
 # Editor
 .vscode/
 .idea/
 
-# Grok workspace (optional - contains dev config)
+# Dev workspace
 .grok/
-frontend/.grok/
