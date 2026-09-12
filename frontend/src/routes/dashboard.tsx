@@ -77,7 +77,7 @@ function DashboardPage() {
   const [grades, setGrades] = useState<WeeklyGrade[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showSupport, setShowSupport] = useState(false);
+  const [showSupport, setShowSupport] = useState(true); // Changed to true - form open by default
   const [supportForm, setSupportForm] = useState({
     subject: "",
     message: "",
@@ -291,12 +291,14 @@ function DashboardPage() {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               💬 Support Care
             </h2>
-            <button
-              onClick={() => setShowSupport(!showSupport)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-            >
-              {showSupport ? "Cancel" : "New Ticket"}
-            </button>
+            {tickets.length > 0 && (
+              <button
+                onClick={() => setShowSupport(!showSupport)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+              >
+                {showSupport ? "Hide Form" : "New Ticket"}
+              </button>
+            )}
           </div>
 
           {/* New Ticket Form */}
