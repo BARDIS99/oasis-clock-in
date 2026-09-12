@@ -147,9 +147,16 @@ create index if not exists oasis_support_tickets_status_idx
 -- 4. ROW LEVEL SECURITY
 -- ==================
 
-alter table oasis_student_grades enable row level security;
-alter table oasis_notifications enable row level security;
-alter table oasis_support_tickets enable row level security;
+-- Disable RLS on all tables (application handles access control)
+ALTER TABLE oasis_admins DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_sessions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_locations DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_students DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_attendance DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_audit DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_student_grades DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_notifications DISABLE ROW LEVEL SECURITY;
+ALTER TABLE oasis_support_tickets DISABLE ROW LEVEL SECURITY;
 
 -- ==================
 -- 5. ADD NEW COLUMNS (if they don't exist)
