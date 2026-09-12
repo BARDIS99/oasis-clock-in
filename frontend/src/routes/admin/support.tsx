@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AdminShell } from "@/components/admin-shell";
+import { readAdminToken } from "@/lib/device";
 import { getSupabase } from "@/lib/supabase.server";
 
 export const Route = createFileRoute("/admin/support")({
@@ -132,17 +132,14 @@ function AdminSupportPage() {
 
   if (loading) {
     return (
-      <AdminShell>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-gray-400">Loading support tickets...</div>
-        </div>
-      </AdminShell>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-gray-400">Loading support tickets...</div>
+      </div>
     );
   }
 
   return (
-    <AdminShell>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
@@ -323,6 +320,6 @@ function AdminSupportPage() {
           )}
         </div>
       </div>
-    </AdminShell>
+    </div>
   );
 }

@@ -51,7 +51,7 @@ function StudentsPage() {
       setProjectScore(0);
       setComment("");
     } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Failed to grade");
+      pushToast("err", err instanceof Error ? err.message : "Failed to grade");
     } finally {
       setBusy(false);
     }
@@ -185,7 +185,7 @@ function StudentsPage() {
                               pushToast("ok", `${r.name} approved`);
                               await refresh();
                             } catch (err) {
-                              pushToast("error", err instanceof Error ? err.message : "Failed to approve");
+                              pushToast("err", err instanceof Error ? err.message : "Failed to approve");
                             }
                           }}
                         >

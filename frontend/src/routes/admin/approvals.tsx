@@ -37,7 +37,7 @@ function ApprovalsPage() {
       pushToast("ok", "Clock-in approved");
       await loadPending();
     } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Failed to approve");
+      pushToast("err", err instanceof Error ? err.message : "Failed to approve");
     } finally {
       setBusy(null);
     }
@@ -50,7 +50,7 @@ function ApprovalsPage() {
       pushToast("ok", "Clock-in rejected");
       await loadPending();
     } catch (err) {
-      pushToast("error", err instanceof Error ? err.message : "Failed to reject");
+      pushToast("err", err instanceof Error ? err.message : "Failed to reject");
     } finally {
       setBusy(null);
     }

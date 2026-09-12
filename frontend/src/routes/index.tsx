@@ -458,7 +458,7 @@ function Home() {
             <button
               type="button"
               onClick={() => {
-                if (confirm("Are you sure you want to sign out?")) {
+                if (window.confirm("Are you sure you want to sign out?")) {
                   clearStudentSession();
                   setClockId("");
                   setName("");
