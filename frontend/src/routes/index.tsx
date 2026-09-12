@@ -230,14 +230,13 @@ function Home() {
       ) : showUnlock ? (
         <section className="rounded-xl bg-surface dark:bg-slate-800 p-5 shadow-card">
           <p className="text-xs font-medium tracking-wide text-accent dark:text-cyan-400 uppercase">
-            Intern attendance
+            Student sign in
           </p>
           <h1 className="mt-2 font-display text-3xl leading-tight text-navy dark:text-white">
-            One student. One device. One Clock ID.
+            Sign in with your Clock ID
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted dark:text-slate-300">
-            Scan your site QR or enter your Clock ID on the phone you registered.
-            Friends cannot clock in for you.
+            Enter your Clock ID to access your dashboard, clock in/out, and track your performance.
           </p>
           <form onSubmit={onUnlock} className="mt-6 space-y-3">
             <label className="block text-sm font-medium text-ink dark:text-slate-200">
@@ -264,7 +263,7 @@ function Home() {
               disabled={busy}
               className="h-12 w-full rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
             >
-              Continue
+              Sign In
             </button>
           </form>
           <div className="mt-4 flex flex-col gap-2 items-center">
@@ -273,7 +272,7 @@ function Home() {
               search={{ loc: locFromUrl || undefined }}
               className="text-sm font-medium text-accent dark:text-cyan-400"
             >
-              New intern? Register this device
+              New student? Register here
             </Link>
             <button
               type="button"
@@ -440,27 +439,48 @@ function Home() {
             </section>
           )}
 
-          <div className="flex gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              to="/dashboard"
+              className="flex h-12 items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all"
+            >
+              📊 Dashboard
+            </Link>
             <Link
               to="/history"
-              className="flex h-12 flex-1 items-center justify-center rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              className="flex h-12 items-center justify-center rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              My history
+              History
             </Link>
+          </div>
+          
+          <div className="flex gap-3">
             <button
               type="button"
               onClick={() => {
-                clearStudentSession();
-                setClockId("");
-                setName("");
-                setToday(null);
-                setConfirm(null);
-                setError("");
+                if (confirm("Are you sure you want to sign out?")) {
+                  clearStudentSession();
+                  setClockId("");
+                  setName("");
+                  setToday(null);
+                  setConfirm(null);
+                  setError("");
+                  setCurrentGrade(null);
+                  pushToast("ok", "Signed out successfully");
+                }
+              }}
+              className="flex h-12 flex-1 items-center justify-center rounded-lg border-2 border-red-300 dark:border-red-600 bg-white dark:bg-slate-800 text-sm font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              Sign Out
+            </button>
+            <button
+              type="button"
+              onClick={() => {
                 navigate({ to: "/register" });
               }}
               className="flex h-12 flex-1 items-center justify-center rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              New intern
+              Register
             </button>
           </div>
         </div>

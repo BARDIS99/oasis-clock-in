@@ -43,10 +43,13 @@ function RegisterPage() {
     setBusy(true);
     setError("");
     try {
+      // Auto-generate email from name if not provided
+      const autoEmail = email.trim() || `${name.trim().toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@oasis.local`;
+      
       const res = await registerStudent({
         data: {
           name,
-          email,
+          email: autoEmail,
           matric,
           locationId,
           deviceToken: getOrCreateDeviceToken(),
@@ -94,15 +97,7 @@ function RegisterPage() {
                 required 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
-                className="h-12 w-full rounded-md border border-line dark:border-slate-600 bg-bg dark:bg-slate-900 dark:text-white px-3 outline-none focus:border-accent dark:focus:border-cyan-400" 
-              />
-            </Field>
-            <Field label="Email">
-              <input 
-                required 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
+                placeholder="e.g., Ahmed Ibrahim"
                 className="h-12 w-full rounded-md border border-line dark:border-slate-600 bg-bg dark:bg-slate-900 dark:text-white px-3 outline-none focus:border-accent dark:focus:border-cyan-400" 
               />
             </Field>
@@ -110,6 +105,7 @@ function RegisterPage() {
               <input 
                 value={matric} 
                 onChange={(e) => setMatric(e.target.value)} 
+                placeholder="e.g., 19/ENG01/001"
                 className="h-12 w-full rounded-md border border-line dark:border-slate-600 bg-bg dark:bg-slate-900 dark:text-white px-3 outline-none focus:border-accent dark:focus:border-cyan-400" 
               />
             </Field>
@@ -131,7 +127,7 @@ function RegisterPage() {
               disabled={busy || locations.length === 0} 
               className="h-12 w-full rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 hover:from-sky-700 hover:to-cyan-700 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-60"
             >
-              Register this device
+              Register
             </button>
           </form>
           {error ? <p className="mt-3 text-sm text-danger dark:text-red-400">{error}</p> : null}

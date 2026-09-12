@@ -117,11 +117,37 @@ create index if not exists oasis_notifications_created_idx
   on oasis_notifications (created_at desc);
 
 -- ==================
+-- 4. SUPPORT CARE SYSTEM
+-- ==================
+
+-- Support tickets (student can send messages about work issues)
+create table if not exists oasis_support_tickets (
+  id text primary key,
+  student_id text not null references oasis_students(id) on delete cascade,
+  subject text not null,
+  message text not null,
+  status text not null default 'open', -- open, in_progress, resolved
+  priority text not null default 'normal', -- low, normal, high
+  admin_response text,
+  responded_by text references oasis_admins(id) on delete set null,
+  responded_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists oasis_support_tickets_student_idx 
+  on oasis_support_tickets (student_id, created_at desc);
+
+create index if not exists oasis_support_tickets_status_idx 
+  on oasis_support_tickets (status, created_at desc);
+
+-- ==================
 -- 4. ROW LEVEL SECURITY
 -- ==================
 
 alter table oasis_student_grades enable row level security;
 alter table oasis_notifications enable row level security;
+alter table oasis_support_tickets enable row level security;
 
 -- ==================
 -- 5. ADD NEW COLUMNS (if they don't exist)
@@ -202,6 +228,7 @@ BEGIN
   RAISE NOTICE '   - oasis_attendance (Clock in/out + GPS distance + Status)';
   RAISE NOTICE '   - oasis_student_grades (Weekly grades with emojis)';
   RAISE NOTICE '   - oasis_notifications (Clock-in notifications)';
+  RAISE NOTICE '   - oasis_support_tickets (Student support care system)';
   RAISE NOTICE '   - oasis_audit (Admin action logs)';
   RAISE NOTICE '';
   RAISE NOTICE '✨ Features Enabled:';
@@ -212,6 +239,8 @@ BEGIN
   RAISE NOTICE '   ✓ Weekly grading with emojis';
   RAISE NOTICE '   ✓ Live notifications (clock-in only)';
   RAISE NOTICE '   ✓ Device binding + IP verification';
+  RAISE NOTICE '   ✓ Student dashboard with weekly reports';
+  RAISE NOTICE '   ✓ Support care messaging system';
   RAISE NOTICE '';
   RAISE NOTICE '🚀 Next Steps:';
   RAISE NOTICE '   1. Refresh your app (http://localhost:8080)';
