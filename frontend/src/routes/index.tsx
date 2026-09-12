@@ -447,7 +447,8 @@ function Home() {
               📊 Dashboard
             </Link>
             <Link
-              to="/dashboard#support"
+              to="/dashboard"
+              hash="support"
               className="flex h-12 items-center justify-center rounded-lg bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all"
             >
               💬 Support Care
