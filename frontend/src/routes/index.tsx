@@ -447,8 +447,17 @@ function Home() {
               📊 Dashboard
             </Link>
             <Link
+              to="/dashboard#support"
+              className="flex h-12 items-center justify-center rounded-lg bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition-all"
+            >
+              💬 Support Care
+            </Link>
+          </div>
+          
+          <div className="flex gap-3">
+            <Link
               to="/history"
-              className="flex h-12 items-center justify-center rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              className="flex h-12 flex-1 items-center justify-center rounded-lg border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               History
             </Link>

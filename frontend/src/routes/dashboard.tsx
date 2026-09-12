@@ -43,6 +43,18 @@ function DashboardPage() {
 
   useEffect(() => {
     loadData();
+    
+    // Auto-open support if hash is #support
+    if (window.location.hash === '#support') {
+      setShowSupport(true);
+      // Scroll to support section
+      setTimeout(() => {
+        const supportSection = document.getElementById('support-section');
+        if (supportSection) {
+          supportSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
   }, []);
 
   async function loadData() {
@@ -230,7 +242,7 @@ function DashboardPage() {
         </div>
 
         {/* Support Care */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
+        <div id="support-section" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               💬 Support Care
