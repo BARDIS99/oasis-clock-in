@@ -77,7 +77,6 @@ function DashboardPage() {
   const [grades, setGrades] = useState<WeeklyGrade[]>([]);
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showSupport, setShowSupport] = useState(true); // Changed to true - form open by default
   const [supportForm, setSupportForm] = useState({
     subject: "",
     message: "",
@@ -87,35 +86,16 @@ function DashboardPage() {
   useEffect(() => {
     loadData();
     
-    // Auto-open support if hash is #support OR if no tickets exist yet
-    const checkHash = () => {
-      if (window.location.hash === '#support') {
-        setShowSupport(true);
-        // Scroll to support section
-        setTimeout(() => {
-          const supportSection = document.getElementById('support-section');
-          if (supportSection) {
-            supportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }, 300);
-      }
-    };
-    
-    // Check immediately and after a short delay
-    checkHash();
-    setTimeout(checkHash, 100);
-    
-    // Also listen for hash changes
-    window.addEventListener('hashchange', checkHash);
-    return () => window.removeEventListener('hashchange', checkHash);
-  }, []);
-  
-  // Auto-open form if no tickets exist (first time user)
-  useEffect(() => {
-    if (!loading && tickets.length === 0) {
-      setShowSupport(true);
+    // Scroll to support section if hash is #support
+    if (window.location.hash === '#support') {
+      setTimeout(() => {
+        const supportSection = document.getElementById('support-section');
+        if (supportSection) {
+          supportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
     }
-  }, [loading, tickets.length]);
+  }, []);
 
   async function loadData() {
     try {
@@ -161,7 +141,7 @@ function DashboardPage() {
       });
 
       setSupportForm({ subject: "", message: "" });
-      setShowSupport(false);
+      // Don't close form - keep it open for next message
       await loadData();
       alert("Support ticket submitted successfully!");
     } catch (error) {
@@ -287,26 +267,19 @@ function DashboardPage() {
 
         {/* Support Care */}
         <div id="support-section" className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              💬 Support Care
-            </h2>
-            {tickets.length > 0 && (
-              <button
-                onClick={() => setShowSupport(!showSupport)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-              >
-                {showSupport ? "Hide Form" : "New Ticket"}
-              </button>
-            )}
-          </div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+            💬 Support Care
+          </h2>
 
-          {/* New Ticket Form */}
-          {showSupport && (
-            <form onSubmit={handleSubmitTicket} className="mb-6 space-y-4">
+          {/* New Ticket Form - ALWAYS VISIBLE */}
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/10 rounded-lg border-2 border-blue-200 dark:border-blue-800">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              📝 Send a Message to Admin
+            </h3>
+            <form onSubmit={handleSubmitTicket} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Subject
+                  Subject *
                 </label>
                 <input
                   type="text"
@@ -315,88 +288,89 @@ function DashboardPage() {
                     setSupportForm({ ...supportForm, subject: e.target.value })
                   }
                   placeholder="e.g., Cannot come to work tomorrow"
-                  className="w-full px-4 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Message
+                  Message *
                 </label>
                 <textarea
                   value={supportForm.message}
                   onChange={(e) =>
                     setSupportForm({ ...supportForm, message: e.target.value })
                   }
-                  placeholder="Explain your situation..."
+                  placeholder="Explain your situation... (e.g., I'm sick, family emergency, transportation issue)"
                   rows={4}
-                  className="w-full px-4 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
+                  className="w-full px-4 py-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition"
+                className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold rounded-lg transition text-lg"
               >
-                {submitting ? "Submitting..." : "Submit Ticket"}
+                {submitting ? "📤 Sending..." : "📤 Send Message"}
               </button>
             </form>
-          )}
+          </div>
 
-          {/* Tickets List */}
-          {tickets.length === 0 ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No support tickets yet. If you have any issues about coming to
-              work, create a ticket above.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {tickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="border dark:border-gray-700 rounded-lg p-4"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {ticket.subject}
-                      </h3>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {new Date(ticket.created_at).toLocaleString()}
+          {/* Previous Tickets */}
+          {tickets.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                📋 Your Previous Messages
+              </h3>
+              <div className="space-y-4">
+                {tickets.map((ticket) => (
+                  <div
+                    key={ticket.id}
+                    className="border dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 dark:text-white">
+                          {ticket.subject}
+                        </h4>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {new Date(ticket.created_at).toLocaleString()}
+                        </div>
                       </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          ticket.status === "resolved"
+                            ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                            : ticket.status === "in_progress"
+                              ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                              : "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
+                        }`}
+                      >
+                        {ticket.status === "in_progress" ? "In Progress" : ticket.status}
+                      </span>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        ticket.status === "resolved"
-                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                          : ticket.status === "in_progress"
-                            ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-                            : "bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200"
-                      }`}
-                    >
-                      {ticket.status}
-                    </span>
-                  </div>
 
-                  <div className="text-sm text-gray-700 dark:text-gray-300 mb-3">
-                    {ticket.message}
-                  </div>
-
-                  {ticket.admin_response && (
-                    <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-600">
-                      <div className="text-xs text-blue-600 dark:text-blue-400 mb-1">
-                        Admin Response{" "}
-                        {ticket.responded_at &&
-                          `• ${new Date(ticket.responded_at).toLocaleString()}`}
-                      </div>
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {ticket.admin_response}
-                      </div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 mb-3 bg-white dark:bg-gray-800 p-3 rounded">
+                      <strong>Your Message:</strong><br/>
+                      {ticket.message}
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {ticket.admin_response && (
+                      <div className="mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-l-4 border-blue-600">
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mb-2 font-semibold">
+                          ✅ Admin Response{" "}
+                          {ticket.responded_at &&
+                            `• ${new Date(ticket.responded_at).toLocaleString()}`}
+                        </div>
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {ticket.admin_response}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
