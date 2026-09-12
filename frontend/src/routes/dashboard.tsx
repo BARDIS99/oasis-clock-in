@@ -87,18 +87,35 @@ function DashboardPage() {
   useEffect(() => {
     loadData();
     
-    // Auto-open support if hash is #support
-    if (window.location.hash === '#support') {
-      setShowSupport(true);
-      // Scroll to support section
-      setTimeout(() => {
-        const supportSection = document.getElementById('support-section');
-        if (supportSection) {
-          supportSection.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    }
+    // Auto-open support if hash is #support OR if no tickets exist yet
+    const checkHash = () => {
+      if (window.location.hash === '#support') {
+        setShowSupport(true);
+        // Scroll to support section
+        setTimeout(() => {
+          const supportSection = document.getElementById('support-section');
+          if (supportSection) {
+            supportSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300);
+      }
+    };
+    
+    // Check immediately and after a short delay
+    checkHash();
+    setTimeout(checkHash, 100);
+    
+    // Also listen for hash changes
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
   }, []);
+  
+  // Auto-open form if no tickets exist (first time user)
+  useEffect(() => {
+    if (!loading && tickets.length === 0) {
+      setShowSupport(true);
+    }
+  }, [loading, tickets.length]);
 
   async function loadData() {
     try {
