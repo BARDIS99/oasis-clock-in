@@ -1,0 +1,32 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d9488;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="gradient2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d9488;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0891b2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0284c7;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer ring - gradient from green to teal -->
+  <circle cx="100" cy="100" r="90" fill="url(#gradient1)" opacity="0.95"/>
+  
+  <!-- Inner curved swoosh - teal to blue -->
+  <path d="M 40 100 Q 70 40, 140 60 Q 170 70, 180 100 Q 170 130, 140 140 Q 70 160, 40 100 Z" 
+        fill="url(#gradient2)" opacity="0.9"/>
+  
+  <!-- White center circle -->
+  <circle cx="100" cy="100" r="55" fill="white"/>
+  
+  <!-- Green inner arc -->
+  <path d="M 55 100 Q 70 65, 100 55 Q 130 65, 145 100" 
+        stroke="#22c55e" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+  
+  <!-- Blue accent curve -->
+  <path d="M 145 100 Q 130 135, 100 145 Q 70 135, 55 100" 
+        stroke="#0891b2" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.8"/>
+</svg>
