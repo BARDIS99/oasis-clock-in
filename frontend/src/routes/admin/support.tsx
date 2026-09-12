@@ -320,6 +320,5 @@ function AdminSupportPage() {
           )}
         </div>
       </div>
-    </div>
   );
 }
