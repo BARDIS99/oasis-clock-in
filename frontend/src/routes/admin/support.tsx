@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { readAdminToken } from "@/lib/device";
-import { createServerFn } from "@tanstack/start";
+import { createServerFn } from "@tanstack/react-start";
 import { getSupabase } from "@/lib/supabase.server";
 
 // Server functions
