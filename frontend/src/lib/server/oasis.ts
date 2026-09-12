@@ -376,6 +376,7 @@ export const clockAction = createServerFn({ method: "POST" })
           .from("oasis_attendance")
           .update({ 
             clock_in_time: now, 
+            clock_in_ip: currentIp,
             location_id: locId, 
             status: "pending",
             distance_meters: distanceMeters
@@ -389,6 +390,7 @@ export const clockAction = createServerFn({ method: "POST" })
           location_id: locId,
           day,
           clock_in_time: now,
+          clock_in_ip: currentIp,
           status: "pending",
           distance_meters: distanceMeters,
         });
@@ -412,7 +414,10 @@ export const clockAction = createServerFn({ method: "POST" })
     
     const updated = await sb
       .from("oasis_attendance")
-      .update({ clock_out_time: now })
+      .update({ 
+        clock_out_time: now,
+        clock_out_ip: currentIp
+      })
       .eq("id", existing.id);
     if (updated.error) throwSb(updated.error, "Could not clock out");
     
@@ -761,7 +766,7 @@ export const listAttendance = createServerFn({ method: "POST" })
     const to = data.to || "2100-01-01";
     const res = await sb
       .from("oasis_attendance")
-      .select("id, day, student_id, location_id, clock_in_time, clock_out_time, status")
+      .select("id, day, student_id, location_id, clock_in_time, clock_out_time, clock_in_ip, clock_out_ip, status")
       .gte("day", from)
       .lte("day", to)
       .order("day", { ascending: false })
@@ -774,6 +779,8 @@ export const listAttendance = createServerFn({ method: "POST" })
       location_id: string | null;
       clock_in_time: string | null;
       clock_out_time: string | null;
+      clock_in_ip: string | null;
+      clock_out_ip: string | null;
       status: string;
     }[];
     const studentIds = [...new Set(rows.map((r) => r.student_id))];
@@ -802,6 +809,8 @@ export const listAttendance = createServerFn({ method: "POST" })
         location_name: r.location_id ? locMap[r.location_id] || null : null,
         clock_in_time: r.clock_in_time,
         clock_out_time: r.clock_out_time,
+        clock_in_ip: r.clock_in_ip,
+        clock_out_ip: r.clock_out_ip,
         status: r.status,
       }))
       .filter((row) => {

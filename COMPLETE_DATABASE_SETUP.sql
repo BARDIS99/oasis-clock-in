@@ -61,6 +61,8 @@ create table if not exists oasis_attendance (
   day date not null,
   clock_in_time timestamptz,
   clock_out_time timestamptz,
+  clock_in_ip text,
+  clock_out_ip text,
   status text not null default 'present'
 );
 
@@ -172,6 +174,24 @@ BEGIN
     WHERE table_name = 'oasis_attendance' AND column_name = 'distance_meters'
   ) THEN
     ALTER TABLE oasis_attendance ADD COLUMN distance_meters integer;
+  END IF;
+END $$;
+
+-- Add clock_in_ip and clock_out_ip columns if they don't exist
+DO $$ 
+BEGIN 
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'oasis_attendance' AND column_name = 'clock_in_ip'
+  ) THEN
+    ALTER TABLE oasis_attendance ADD COLUMN clock_in_ip text;
+  END IF;
+  
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'oasis_attendance' AND column_name = 'clock_out_ip'
+  ) THEN
+    ALTER TABLE oasis_attendance ADD COLUMN clock_out_ip text;
   END IF;
 END $$;
 

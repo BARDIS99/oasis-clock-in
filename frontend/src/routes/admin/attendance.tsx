@@ -16,6 +16,8 @@ type Row = {
   location_name: string | null;
   clock_in_time: string | null;
   clock_out_time: string | null;
+  clock_in_ip: string | null;
+  clock_out_ip: string | null;
   status: string;
   location_id: string | null;
 };
@@ -58,7 +60,7 @@ function AttendancePage() {
   }, []);
 
   function exportCsv() {
-    const header = "Date,Student,Clock ID,Location,In,Out,Status";
+    const header = "Date,Student,Clock ID,Location,In,Out,In IP,Out IP,Status";
     const body = rows
       .map((r) =>
         [
@@ -68,6 +70,8 @@ function AttendancePage() {
           r.location_name || "",
           r.clock_in_time || "",
           r.clock_out_time || "",
+          r.clock_in_ip || "",
+          r.clock_out_ip || "",
           r.status,
         ]
           .map((v) => `"${String(v).replaceAll('"', '""')}"`)
@@ -209,30 +213,42 @@ function AttendancePage() {
           <p className="px-4 py-10 text-sm text-muted">No attendance in this range.</p>
         ) : (
           <table className="w-full min-w-[820px] text-left text-sm">
-            <thead className="bg-surface-2 text-muted">
+            <thead className="bg-surface-2 dark:bg-gray-700 text-muted dark:text-gray-300">
               <tr>
                 <th className="px-4 py-2 font-medium">Date</th>
                 <th className="px-4 py-2 font-medium">Student</th>
                 <th className="px-4 py-2 font-medium">Clock ID</th>
                 <th className="px-4 py-2 font-medium">Location</th>
                 <th className="px-4 py-2 font-medium">Clock In</th>
+                <th className="px-4 py-2 font-medium">In IP</th>
                 <th className="px-4 py-2 font-medium">Clock Out</th>
+                <th className="px-4 py-2 font-medium">Out IP</th>
                 <th className="px-4 py-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id} className="border-t border-line hover:bg-surface-2/50">
+                <tr key={r.id} className="border-t border-line dark:border-gray-700 hover:bg-surface-2/50 dark:hover:bg-gray-700/50">
                   <td className="px-4 py-3">{formatDate(r.day)}</td>
                   <td className="px-4 py-3">{r.name}</td>
                   <td className="px-4 py-3 font-mono text-xs">{r.clock_id}</td>
                   <td className="px-4 py-3">{r.location_name || "—"}</td>
                   <td className="px-4 py-3">{formatTime(r.clock_in_time)}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                      {r.clock_in_ip || "—"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">{formatTime(r.clock_out_time)}</td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                      {r.clock_out_ip || "—"}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => startEdit(r)}
-                      className="flex items-center gap-1.5 rounded-md bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20"
+                      className="flex items-center gap-1.5 rounded-md bg-accent/10 dark:bg-cyan-900/30 px-3 py-1.5 text-xs font-medium text-accent dark:text-cyan-400 hover:bg-accent/20 dark:hover:bg-cyan-900/50"
                     >
                       <Clock className="h-3.5 w-3.5" />
                       Adjust Time
