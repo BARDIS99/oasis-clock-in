@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { AdminShell } from "~/components/admin-shell";
-import { getSupabase } from "~/lib/supabase.server";
+import { AdminShell } from "@/components/admin-shell";
+import { getSupabase } from "@/lib/supabase.server";
 
 export const Route = createFileRoute("/admin/support")({
   component: AdminSupportPage,

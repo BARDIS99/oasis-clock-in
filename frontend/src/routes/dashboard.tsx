@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { StudentShell } from "~/components/student-shell";
-import { getSupabase } from "~/lib/supabase.server";
+import { StudentShell } from "@/components/student-shell";
+import { getSupabase } from "@/lib/supabase.server";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
