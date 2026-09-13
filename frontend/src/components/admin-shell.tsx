@@ -38,6 +38,11 @@ export function AdminShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [open, setOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const NavLinks = () => (
     <nav className="flex flex-col gap-2">

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { StudentShell } from "@/components/student-shell";
 import { createServerFn } from "@tanstack/react-start";
 import { getSupabase } from "@/lib/supabase.server";
+import { readStudentSession } from "@/lib/device";
 
 // Server functions
 const loadGradesServer = createServerFn({ method: "GET" })
@@ -99,20 +100,18 @@ function DashboardPage() {
 
   async function loadData() {
     try {
-      const studentData = localStorage.getItem("oasis_student");
-      if (!studentData) {
+      const session = readStudentSession();
+      if (!session) {
         window.location.href = "/";
         return;
       }
 
-      const student = JSON.parse(studentData);
-
       // Load grades via server function
-      const gradesData = await loadGradesServer({ data: { studentId: student.id } });
+      const gradesData = await loadGradesServer({ data: { studentId: session.studentId } });
       if (gradesData) setGrades(gradesData);
 
       // Load support tickets via server function
-      const ticketsData = await loadTicketsServer({ data: { studentId: student.id } });
+      const ticketsData = await loadTicketsServer({ data: { studentId: session.studentId } });
       if (ticketsData) setTickets(ticketsData);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
@@ -127,14 +126,12 @@ function DashboardPage() {
 
     setSubmitting(true);
     try {
-      const studentData = localStorage.getItem("oasis_student");
-      if (!studentData) return;
-
-      const student = JSON.parse(studentData);
+      const session = readStudentSession();
+      if (!session) return;
       
       await submitTicketServer({
         data: {
-          studentId: student.id,
+          studentId: session.studentId,
           subject: supportForm.subject.trim(),
           message: supportForm.message.trim(),
         },

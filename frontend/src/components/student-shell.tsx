@@ -1,9 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
 
 export function StudentShell({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   return (
     <div className="min-h-dvh bg-gradient-to-br from-sky-50 via-white to-emerald-50 text-ink dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:text-white transition-colors">
@@ -21,9 +27,9 @@ export function StudentShell({ children }: { children: ReactNode }) {
           <button
             onClick={toggleTheme}
             className="rounded-lg bg-white/10 p-2 text-white transition-all hover:bg-white/20"
-            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            title={mounted ? `Switch to ${theme === "light" ? "dark" : "light"} mode` : "Toggle theme"}
           >
-            {theme === "light" ? "🌙" : "☀️"}
+            {mounted ? (theme === "light" ? "🌙" : "☀️") : "🌙"}
           </button>
         </div>
       </header>
