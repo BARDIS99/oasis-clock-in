@@ -1,5 +1,5 @@
-// Migration plan moved to frontend/scripts
-import { pendingMigrations } from "../../../scripts/migration-plan.mjs";
+// Migration plan in frontend/scripts
+import { pendingMigrations } from "../../scripts/migration-plan.mjs";
 
 /** Which database backend is active. */
 export type DbSource = "neon" | "pglite";
