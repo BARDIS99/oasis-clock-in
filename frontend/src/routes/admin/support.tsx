@@ -121,10 +121,15 @@ function AdminSupportPage() {
 
     setSubmitting(true);
     try {
-      const adminData = localStorage.getItem("oasis_admin");
-      if (!adminData) throw new Error("Not logged in");
+      const token = readAdminToken();
+      if (!token) {
+        alert("Not logged in. Please refresh and log in again.");
+        return;
+      }
 
-      const admin = JSON.parse(adminData);
+      // Import adminMe to get admin details
+      const { adminMe } = await import("@/lib/server/oasis");
+      const admin = await adminMe({ data: { token } });
 
       await respondToTicketServer({
         data: {
@@ -141,7 +146,7 @@ function AdminSupportPage() {
       alert("Response sent successfully!");
     } catch (error) {
       console.error("Failed to respond:", error);
-      alert("Failed to send response");
+      alert("Failed to send response. Please try again.");
     } finally {
       setSubmitting(false);
     }
