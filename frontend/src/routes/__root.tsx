@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { Toasts } from "@/components/toasts";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { registerServiceWorker } from "@/lib/pwa-register";
 import appCss from "../styles.css?url";
 
@@ -47,6 +48,7 @@ export const Route = createRootRoute({
       <body>
         <PreviewHostBridge />
         <AuthProvider>
+          <PWAInstallPrompt />
           <Toasts />
           <Outlet />
         </AuthProvider>
