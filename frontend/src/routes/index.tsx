@@ -183,18 +183,58 @@ function Home() {
     }
   }
 
-  function handleQrScan(data: string) {
+  async function handleQrScan(data: string) {
+    setShowScanner(false);
+    
     try {
       const url = new URL(data);
       const loc = url.searchParams.get("loc");
+      
       if (loc) {
         setLocationId(loc);
-        pushToast("ok", "Location scanned");
+        pushToast("ok", "Location scanned - Clocking in...");
+        
+        // Auto clock-in after QR scan
+        if (name && deviceOk) {
+          setBusy(true);
+          setError("");
+          
+          try {
+            const res = await clockAction({
+              data: {
+                clockId,
+                deviceToken: token,
+                deviceFp: deviceFingerprint(),
+                locationId: loc, // Use scanned location
+                action: "in",
+                userLat: userLocation?.lat,
+                userLng: userLocation?.lng,
+              },
+            });
+            
+            setConfirm({ action: res.action, at: res.at, pending: res.pending });
+            
+            if (res.pending) {
+              pushToast("ok", "✅ Clock-in submitted! Waiting for admin approval...");
+            } else {
+              pushToast("ok", "✅ Clock-in successful!");
+            }
+            
+            await loadStudent(clockId);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not clock in");
+            pushToast("error", "Clock-in failed. Please try again.");
+          } finally {
+            setBusy(false);
+          }
+        } else {
+          pushToast("warn", "Please unlock with Clock ID first");
+        }
       }
     } catch {
       // Not a valid URL, ignore
+      pushToast("error", "Invalid QR code");
     }
-    setShowScanner(false);
   }
 
   async function handleForgotClockId(e: React.FormEvent) {
