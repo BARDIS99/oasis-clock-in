@@ -3,6 +3,7 @@ import { Check, Lock, MapPin, QrCode } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { StudentShell } from "@/components/student-shell";
 import { QrScannerComponent } from "@/components/qr-scanner";
+import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import {
   clearStudentSession,
   deviceFingerprint,
@@ -42,6 +43,8 @@ function Home() {
   const [locations, setLocations] = useState<LocationOpt[]>([]);
   const [locationId, setLocationId] = useState(locFromUrl);
   const [name, setName] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [deviceOk, setDeviceOk] = useState(true);
   const [canClaim, setCanClaim] = useState(false);
   const [today, setToday] = useState<TodayRow | null>(null);
@@ -104,6 +107,8 @@ function Home() {
         data: { clockId: id, deviceToken: getOrCreateDeviceToken() },
       });
       setName(res.student.name);
+      setStudentId(res.student.id);
+      setProfilePicture(res.student.profilePictureUrl || null);
       setDeviceOk(res.deviceOk);
       setCanClaim(Boolean(res.canClaim));
       setToday(res.today);
@@ -223,17 +228,17 @@ function Home() {
             await loadStudent(clockId);
           } catch (err) {
             setError(err instanceof Error ? err.message : "Could not clock in");
-            pushToast("error", "Clock-in failed. Please try again.");
+            pushToast("err", "Clock-in failed. Please try again.");
           } finally {
             setBusy(false);
           }
         } else {
-          pushToast("warn", "Please unlock with Clock ID first");
+          pushToast("info", "Please unlock with Clock ID first");
         }
       }
     } catch {
       // Not a valid URL, ignore
-      pushToast("error", "Invalid QR code");
+      pushToast("err", "Invalid QR code");
     }
   }
 
@@ -259,7 +264,7 @@ function Home() {
   const showUnlock = !loading && (!clockId || (!name && error));
 
   return (
-    <StudentShell>
+    <StudentShell studentName={name} profilePicture={profilePicture}>
       {loading ? (
         <section className="rounded-xl bg-surface dark:bg-slate-800 p-5 shadow-card">
           <div className="h-3 w-28 rounded-sm bg-surface-2 dark:bg-slate-700" />
@@ -362,6 +367,20 @@ function Home() {
               </div>
             ) : null}
           </section>
+
+          {/* Profile Picture Section */}
+          {studentId && (
+            <section className="rounded-xl bg-surface dark:bg-slate-800 p-5 shadow-card">
+              <h2 className="text-sm font-medium text-accent dark:text-cyan-400 uppercase tracking-wide">Profile Picture</h2>
+              <div className="mt-4">
+                <ProfilePictureUpload
+                  studentId={studentId}
+                  currentPictureUrl={profilePicture}
+                  onSuccess={(newUrl) => setProfilePicture(newUrl)}
+                />
+              </div>
+            </section>
+          )}
 
           {confirm ? (
             <section className="rounded-xl border border-ok/20 bg-ok-soft dark:bg-green-900/20 dark:border-green-700 p-5 text-center">

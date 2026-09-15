@@ -36,6 +36,7 @@ type StudentRow = {
   location_id: string | null;
   status: string;
   registered_at: string;
+  profile_picture_url: string | null;
 };
 
 type AttendanceRow = {
@@ -263,6 +264,7 @@ export const getStudentByClock = createServerFn({ method: "POST" })
         status: student.status,
         locationId: student.location_id,
         registeredAt: student.registered_at,
+        profilePictureUrl: student.profile_picture_url,
       },
       deviceOk,
       canClaim,
@@ -306,14 +308,64 @@ export const clockAction = createServerFn({ method: "POST" })
     if (student.status !== "active") {
       throw new Error("This Clock ID is suspended. Speak with your supervisor.");
     }
+    
+    // 🔒 STRICT ONE-DEVICE ENFORCEMENT - NO OTHER DEVICE ALLOWED
+    const currentIp = clientIp();
+    
     if (student.device_token !== data.deviceToken) {
-      throw new Error("This Clock ID is registered to a different device");
+      // Log failed attempt to database
+      await sb.from("oasis_failed_attempts").insert({
+        id: newId("fail"),
+        clock_id: clockId,
+        device_token: data.deviceToken,
+        device_ip: currentIp,
+        device_fp: data.deviceFp,
+        attempt_time: new Date().toISOString(),
+        failure_reason: "DIFFERENT DEVICE - Device token mismatch",
+        location_id: data.locationId || null,
+        user_lat: data.userLat || null,
+        user_lng: data.userLng || null,
+      });
+      
+      throw new Error("❌ DEVICE NOT ALLOWED\n\nThis Clock ID is LOCKED to a different device.\n\nYou CANNOT use another phone to clock in.\n\nRegistered Device: " + student.device_token.slice(0, 8) + "...\nYour Device: " + data.deviceToken.slice(0, 8) + "...\n\n⚠️ If you changed phones, contact your supervisor to reassign your Clock ID.");
     }
 
-    // Check device IP matches registration IP
-    const currentIp = clientIp();
+    // Additional device fingerprint check for extra security
+    if (student.device_fp && data.deviceFp && student.device_fp !== data.deviceFp) {
+      // Log suspicious attempt
+      await sb.from("oasis_failed_attempts").insert({
+        id: newId("fail"),
+        clock_id: clockId,
+        device_token: data.deviceToken,
+        device_ip: currentIp,
+        device_fp: data.deviceFp,
+        attempt_time: new Date().toISOString(),
+        failure_reason: "DEVICE FINGERPRINT CHANGED - Browser or device properties changed",
+        location_id: data.locationId || null,
+        user_lat: data.userLat || null,
+        user_lng: data.userLng || null,
+      });
+      
+      throw new Error("❌ DEVICE VERIFICATION FAILED\n\nDevice fingerprint doesn't match.\n\nThis happens if you:\n• Cleared browser data\n• Updated your phone/browser\n• Changed browser settings\n\n⚠️ Contact your supervisor to re-verify this device.");
+    }
+
+    // Check IP address matches (strict enforcement)
     if (student.device_ip !== "bound-device" && currentIp !== "bound-device" && student.device_ip !== currentIp) {
-      throw new Error("This device's network location has changed. Contact your supervisor.");
+      // Log IP mismatch
+      await sb.from("oasis_failed_attempts").insert({
+        id: newId("fail"),
+        clock_id: clockId,
+        device_token: data.deviceToken,
+        device_ip: currentIp,
+        device_fp: data.deviceFp,
+        attempt_time: new Date().toISOString(),
+        failure_reason: `IP ADDRESS CHANGED - Was: ${student.device_ip}, Now: ${currentIp}`,
+        location_id: data.locationId || null,
+        user_lat: data.userLat || null,
+        user_lng: data.userLng || null,
+      });
+      
+      throw new Error("❌ IP ADDRESS CHANGED\n\nYour device's IP address doesn't match.\n\nRegistered IP: " + student.device_ip + "\nCurrent IP: " + currentIp + "\n\nThis happens if you:\n• Changed WiFi networks\n• Using mobile data instead of WiFi\n• Using VPN or proxy\n\n⚠️ Contact your supervisor if this is your registered device.");
     }
 
     const locId = data.locationId || student.location_id;
@@ -1201,4 +1253,103 @@ export const rejectClockIn = createServerFn({ method: "POST" })
     
     await audit(admin.admin_id, "reject_clockin", data.attendanceId);
     return { ok: true };
+  });
+
+
+// ==================
+// PROFILE PICTURE UPLOAD
+// ==================
+
+export const uploadProfilePicture = createServerFn({ method: "POST" })
+  .validator((d: { studentId: string; imageBase64: string; fileName: string }) => d)
+  .handler(async ({ data }) => {
+    const sb = getSupabase();
+    
+    // Verify student exists
+    const studentRes = await sb
+      .from("oasis_students")
+      .select("id, clock_id, profile_picture_url")
+      .eq("id", data.studentId)
+      .maybeSingle();
+    
+    if (!studentRes.data) throw new Error("Student not found");
+    const student = studentRes.data as { id: string; clock_id: string; profile_picture_url: string | null };
+    
+    // Extract base64 data (remove data:image/xxx;base64, prefix if present)
+    const base64Data = data.imageBase64.includes(",") 
+      ? data.imageBase64.split(",")[1] 
+      : data.imageBase64;
+    
+    const buffer = Buffer.from(base64Data, "base64");
+    
+    // Validate file size (5MB max)
+    if (buffer.length > 5 * 1024 * 1024) {
+      throw new Error("Image must be less than 5MB");
+    }
+    
+    // Generate unique filename
+    const ext = data.fileName.split(".").pop()?.toLowerCase() || "jpg";
+    if (!["jpg", "jpeg", "png", "webp"].includes(ext)) {
+      throw new Error("Only JPG, PNG, and WebP images are allowed");
+    }
+    
+    const fileName = `${student.clock_id}_${Date.now()}.${ext}`;
+    
+    // Upload to Supabase Storage
+    const uploadResult = await sb.storage
+      .from("profile-pictures")
+      .upload(fileName, buffer, {
+        contentType: `image/${ext === "jpg" ? "jpeg" : ext}`,
+        upsert: true,
+      });
+    
+    if (uploadResult.error) {
+      console.error("Storage upload error:", uploadResult.error);
+      throw new Error("Failed to upload image. Make sure the 'profile-pictures' bucket exists in Supabase Storage.");
+    }
+    
+    // Get public URL
+    const { data: urlData } = sb.storage
+      .from("profile-pictures")
+      .getPublicUrl(fileName);
+    
+    const publicUrl = urlData.publicUrl;
+    
+    // Delete old profile picture if exists
+    if (student.profile_picture_url) {
+      const oldFileName = student.profile_picture_url.split("/").pop();
+      if (oldFileName) {
+        await sb.storage.from("profile-pictures").remove([oldFileName]);
+      }
+    }
+    
+    // Update student record with new picture URL
+    const updateResult = await sb
+      .from("oasis_students")
+      .update({ profile_picture_url: publicUrl })
+      .eq("id", data.studentId);
+    
+    if (updateResult.error) {
+      console.error("Database update error:", updateResult.error);
+      throw new Error("Failed to update profile");
+    }
+    
+    // Log the update
+    await audit(null, "profile_picture_updated", `Student ${student.clock_id} updated profile picture`);
+    
+    return { url: publicUrl };
+  });
+
+export const getStudentProfile = createServerFn({ method: "POST" })
+  .validator((d: { studentId: string }) => d)
+  .handler(async ({ data }) => {
+    const sb = getSupabase();
+    const result = await sb
+      .from("oasis_students")
+      .select("id, name, email, matric, clock_id, profile_picture_url, status, registered_at")
+      .eq("id", data.studentId)
+      .maybeSingle();
+    
+    if (!result.data) throw new Error("Student not found");
+    return result.data;
   });

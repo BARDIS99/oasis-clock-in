@@ -2,8 +2,9 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/lib/theme";
+import { ProfilePictureDisplay } from "./profile-picture-upload";
 
-export function StudentShell({ children }: { children: ReactNode }) {
+export function StudentShell({ children, studentName, profilePicture }: { children: ReactNode; studentName?: string; profilePicture?: string | null }) {
   const { theme, toggleTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   
@@ -17,10 +18,20 @@ export function StudentShell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-lg items-center justify-between px-5 py-4">
           <Link to="/" className="flex items-center gap-3 transition-transform hover:scale-105">
             <div className="relative">
-              <img src="/logo.svg" alt="Oasis" className="size-12 drop-shadow-md" />
+              {studentName && profilePicture !== undefined ? (
+                <ProfilePictureDisplay
+                  pictureUrl={profilePicture}
+                  name={studentName}
+                  size="md"
+                />
+              ) : (
+                <img src="/logo.svg" alt="Oasis" className="size-12 drop-shadow-md" />
+              )}
             </div>
             <span>
-              <span className="block font-display text-xl leading-tight tracking-tight text-white drop-shadow-sm">Oasis Clock-In</span>
+              <span className="block font-display text-xl leading-tight tracking-tight text-white drop-shadow-sm">
+                {studentName || "Oasis Clock-In"}
+              </span>
               <span className="block text-xs text-sky-100 dark:text-slate-300">Sandlip Oasis · SIWES</span>
             </span>
           </Link>
