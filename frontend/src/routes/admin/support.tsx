@@ -113,7 +113,7 @@ function AdminSupportPage() {
     }
   }
 
-  async function handleRespond(ticketId: string, status: "in_progress" | "resolved") {
+  async function handleRespond(ticketId: string, status: "in_progress" | "resolved", autoClose = false) {
     if (!responseText.trim()) {
       alert("Please enter a response");
       return;
@@ -144,6 +144,11 @@ function AdminSupportPage() {
       setResponding(null);
       await loadTickets();
       alert("Response sent successfully!");
+      
+      // Auto-close if marked as resolved
+      if (status === "resolved" || autoClose) {
+        setResponding(null);
+      }
     } catch (error) {
       console.error("Failed to respond:", error);
       alert("Failed to send response. Please try again.");
@@ -286,14 +291,14 @@ function AdminSupportPage() {
                   />
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleRespond(ticket.id, "resolved")}
+                      onClick={() => handleRespond(ticket.id, "resolved", true)}
                       disabled={submitting}
                       className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-lg transition"
                     >
                       Send & Mark Resolved
                     </button>
                     <button
-                      onClick={() => handleRespond(ticket.id, "in_progress")}
+                      onClick={() => handleRespond(ticket.id, "in_progress", false)}
                       disabled={submitting}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition"
                     >
