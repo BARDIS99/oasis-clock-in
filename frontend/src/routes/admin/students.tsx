@@ -3,6 +3,7 @@ import { Award } from "lucide-react";
 import { useEffect, useState } from "react";
 import { readAdminToken } from "@/lib/device";
 import { formatStamp } from "@/lib/format";
+import { ProfilePictureDisplay } from "@/components/profile-picture-upload";
 import { approveStudent, deleteStudent, gradeStudent, listStudents, reassignDevice, setStudentStatus } from "@/lib/server/oasis";
 import { pushToast } from "@/lib/toast";
 
@@ -19,6 +20,7 @@ type Row = {
   device_bound: boolean;
   last_in: string | null;
   approved: boolean;
+  profile_picture_url: string | null;
 };
 
 function StudentsPage() {
@@ -159,9 +161,18 @@ function StudentsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-medium dark:text-white">{r.name}</p>
-                    <p className="text-xs text-muted dark:text-slate-400">{r.email}</p>
-                    {r.location_name ? <p className="text-xs text-faint dark:text-slate-500">{r.location_name}</p> : null}
+                    <div className="flex items-center gap-3">
+                      <ProfilePictureDisplay
+                        pictureUrl={r.profile_picture_url}
+                        name={r.name}
+                        size="md"
+                      />
+                      <div>
+                        <p className="font-medium dark:text-white">{r.name}</p>
+                        <p className="text-xs text-muted dark:text-slate-400">{r.email}</p>
+                        {r.location_name ? <p className="text-xs text-faint dark:text-slate-500">{r.location_name}</p> : null}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-4 py-3 font-mono text-xs dark:text-slate-300">{r.clock_id}</td>
                   <td className="px-4 py-3">

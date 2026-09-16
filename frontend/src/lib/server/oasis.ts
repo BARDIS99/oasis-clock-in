@@ -681,7 +681,7 @@ export const listStudents = createServerFn({ method: "POST" })
     const sb = getSupabase();
     const res = await sb
       .from("oasis_students")
-      .select("id, name, email, matric, clock_id, status, registered_at, location_id, device_token, approved")
+      .select("id, name, email, matric, clock_id, status, registered_at, location_id, device_token, approved, profile_picture_url")
       .order("registered_at", { ascending: false });
     if (res.error) throwSb(res.error, "Could not load students");
     const rows = (res.data || []) as (StudentRow & { location_id: string | null; approved: boolean })[];
@@ -723,6 +723,7 @@ export const listStudents = createServerFn({ method: "POST" })
         device_bound: !r.device_token.startsWith("pending_"),
         last_in: lastMap[r.id] || null,
         approved: r.approved ?? false,
+        profile_picture_url: r.profile_picture_url || null,
       }));
   });
 
