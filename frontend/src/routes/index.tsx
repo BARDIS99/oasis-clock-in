@@ -392,19 +392,28 @@ function Home() {
 
               {/* Clock In/Out Buttons */}
               <div className="space-y-3">
-                {!today?.clock_in_time ? (
+                {!signedIn || !clockId ? (
+                  <div className="rounded-2xl bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-700 p-6 text-center">
+                    <p className="text-lg font-bold text-yellow-800 dark:text-yellow-300">
+                      🔒 Sign In Required
+                    </p>
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-2">
+                      Please enter your Clock ID above to clock in/out
+                    </p>
+                  </div>
+                ) : !today?.clock_in_time ? (
                   <button
                     onClick={() => handleClockAction("in")}
-                    disabled={busy}
-                    className="h-16 w-full rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-2xl hover:shadow-green-500/50 hover:scale-[1.02] transition-all disabled:opacity-50"
+                    disabled={busy || !signedIn || !clockId}
+                    className="h-16 w-full rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-xl shadow-2xl hover:shadow-green-500/50 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {busy ? "Processing..." : "🟢 Clock In"}
                   </button>
                 ) : !today?.clock_out_time ? (
                   <button
                     onClick={() => handleClockAction("out")}
-                    disabled={busy}
-                    className="h-16 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold text-xl shadow-2xl hover:shadow-blue-500/50 hover:scale-[1.02] transition-all disabled:opacity-50"
+                    disabled={busy || !signedIn || !clockId}
+                    className="h-16 w-full rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-bold text-xl shadow-2xl hover:shadow-blue-500/50 hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {busy ? "Processing..." : "🔵 Clock Out"}
                   </button>
