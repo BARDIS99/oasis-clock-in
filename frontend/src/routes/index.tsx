@@ -128,6 +128,13 @@ function Home() {
   }
 
   async function handleClockAction(action: "in" | "out") {
+    // Validate Clock ID before allowing clock action
+    if (!clockId || !signedIn) {
+      setError("Please sign in with your Clock ID first");
+      pushToast("err", "Please sign in first");
+      return;
+    }
+    
     setBusy(true);
     setError("");
     setConfirm(null);
@@ -158,31 +165,6 @@ function Home() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not record attendance");
       pushToast("err", err instanceof Error ? err.message : "Failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    if (!clockId.trim()) return;
-    
-    setBusy(true);
-    setError("");
-    
-    try {
-      const res = await getStudentByClock({
-        data: { clockId: clockId.trim().toUpperCase(), deviceToken: getOrCreateDeviceToken() },
-      });
-      
-      saveStudentSession(res.student.clockId, res.student.id);
-      pushToast("ok", `Welcome back, ${res.student.name}!`);
-      
-      // Redirect to dashboard or appropriate page
-      window.location.href = "/dashboard";
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Clock ID not found");
-      pushToast("err", "Clock ID not found or incorrect");
     } finally {
       setBusy(false);
     }
@@ -442,6 +424,52 @@ function Home() {
                     <p className="text-sm text-red-700 dark:text-red-400 text-center">{error}</p>
                   </div>
                 )}
+              </div>
+
+              {/* Dashboard and Support Care Buttons */}
+              <div className="grid grid-cols-2 gap-3 mt-6">
+                <Link
+                  to="/dashboard"
+                  className="flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                >
+                  📊 Dashboard
+                </Link>
+                <Link
+                  to="/dashboard"
+                  hash="support"
+                  className="flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-bold shadow-lg hover:shadow-xl transition-all"
+                >
+                  💬 Support
+                </Link>
+              </div>
+
+              {/* History and Sign Out */}
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <Link
+                  to="/history"
+                  className="flex h-12 items-center justify-center rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  📜 History
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to sign out?")) {
+                      setSignedIn(false);
+                      setClockId("");
+                      setStudentName("");
+                      setStudentId("");
+                      setProfilePicture(null);
+                      setToday(null);
+                      setConfirm(null);
+                      setError("");
+                      pushToast("ok", "Signed out successfully");
+                    }
+                  }}
+                  className="flex h-12 items-center justify-center rounded-xl border-2 border-red-300 dark:border-red-600 bg-white dark:bg-slate-800 text-red-700 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                >
+                  🚪 Sign Out
+                </button>
               </div>
             </div>
           </>
