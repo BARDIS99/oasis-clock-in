@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, Camera } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { StudentShell } from "@/components/student-shell";
 import {
   deviceFingerprint,
   getOrCreateDeviceToken,
   saveStudentSession,
 } from "@/lib/device";
-import { bootstrapOasis, registerStudent } from "@/lib/server/oasis";
+import { bootstrapOasis, registerStudent, uploadProfilePicture } from "@/lib/server/oasis";
 import { pushToast } from "@/lib/toast";
 
 type Search = { loc?: string };
@@ -29,7 +29,10 @@ function RegisterPage() {
   const [locations, setLocations] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState<{ clockId: string; name: string } | null>(null);
+  const [done, setDone] = useState<{ clockId: string; name: string; studentId: string } | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     void bootstrapOasis().then((b) => {
@@ -37,6 +40,28 @@ function RegisterPage() {
       setLocationId((current) => current || loc || b.locations[0]?.id || "");
     });
   }, [loc]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      pushToast("err", "Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      pushToast("err", "Image must be less than 5MB");
+      return;
+    }
+
+    setProfileFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setProfileImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,8 +81,25 @@ function RegisterPage() {
           deviceFp: deviceFingerprint(),
         },
       });
+      
+      // Upload profile picture if selected
+      if (profileImage && profileFile) {
+        try {
+          await uploadProfilePicture({
+            data: {
+              studentId: res.studentId,
+              imageBase64: profileImage,
+              fileName: profileFile.name,
+            },
+          });
+        } catch (err) {
+          console.error("Profile picture upload failed:", err);
+          // Don't block registration if upload fails
+        }
+      }
+      
       saveStudentSession(res.clockId, res.studentId);
-      setDone({ clockId: res.clockId, name: res.name });
+      setDone({ clockId: res.clockId, name: res.name, studentId: res.studentId });
       pushToast("ok", "Device registered");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
@@ -92,6 +134,35 @@ function RegisterPage() {
             Your Clock ID will be locked to this phone. Another device cannot clock in on your behalf.
           </p>
           <form onSubmit={onSubmit} className="mt-6 space-y-3">
+            {/* Profile Picture Upload */}
+            <div className="flex flex-col items-center gap-3 pb-4 border-b border-line dark:border-slate-600">
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="relative size-24 rounded-full bg-surface-2 dark:bg-slate-700 border-2 border-dashed border-line dark:border-slate-600 overflow-hidden cursor-pointer hover:border-accent dark:hover:border-cyan-400 transition-colors group"
+              >
+                {profileImage ? (
+                  <img src={profileImage} alt="Profile preview" className="size-full object-cover" />
+                ) : (
+                  <div className="size-full flex flex-col items-center justify-center text-muted dark:text-slate-400 group-hover:text-accent dark:group-hover:text-cyan-400">
+                    <Camera className="size-8" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Camera className="size-6 text-white" />
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+              />
+              <p className="text-xs text-center text-muted dark:text-slate-400">
+                {profileImage ? "Click to change photo" : "Click to add profile picture (optional)"}
+              </p>
+            </div>
+            
             <Field label="Full name">
               <input 
                 required 

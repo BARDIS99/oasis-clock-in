@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { readAdminToken } from "@/lib/device";
 import { createServerFn } from "@tanstack/react-start";
 import { getSupabase } from "@/lib/supabase.server";
+import { ProfilePictureDisplay } from "@/components/profile-picture-upload";
 
 // Server functions
 const loadTicketsServer = createServerFn({ method: "GET" })
@@ -87,6 +88,7 @@ interface SupportTicket {
     email: string;
     matric: string;
     clock_id: string;
+    profile_picture_url: string | null;
   };
 }
 
@@ -252,7 +254,14 @@ function AdminSupportPage() {
                     </span>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                    <span>👤 {ticket.student?.name || "Unknown"} ({ticket.student?.clock_id})</span>
+                    <div className="flex items-center gap-2">
+                      <ProfilePictureDisplay
+                        pictureUrl={ticket.student?.profile_picture_url}
+                        name={ticket.student?.name || "Unknown"}
+                        size="sm"
+                      />
+                      <span>{ticket.student?.name || "Unknown"} ({ticket.student?.clock_id})</span>
+                    </div>
                     <span>📅 {new Date(ticket.created_at).toLocaleString()}</span>
                   </div>
                 </div>
