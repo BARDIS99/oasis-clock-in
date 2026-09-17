@@ -320,16 +320,6 @@ function Home() {
           <>
             {/* Signed In - Clock In/Out Section */}
             <div className="w-full max-w-md space-y-6">
-              {/* Welcome Message */}
-              <div className="text-center">
-                <h2 className="text-3xl font-bold text-slate-800 dark:text-white">
-                  Welcome, {studentName}!
-                </h2>
-                <p className="mt-2 font-mono text-lg text-sky-600 dark:text-cyan-400 tracking-wider">
-                  {clockId}
-                </p>
-              </div>
-
               {/* Confirmation Message */}
               {confirm && (
                 <div className="rounded-2xl bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-200 dark:border-green-700 p-6 text-center">
