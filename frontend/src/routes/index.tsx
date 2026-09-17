@@ -3,7 +3,6 @@ import { Check, Lock, MapPin, QrCode } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { StudentShell } from "@/components/student-shell";
 import { QrScannerComponent } from "@/components/qr-scanner";
-import { ProfilePictureUpload } from "@/components/profile-picture-upload";
 import {
   clearStudentSession,
   deviceFingerprint,
@@ -367,20 +366,6 @@ function Home() {
               </div>
             ) : null}
           </section>
-
-          {/* Profile Picture Section */}
-          {studentId && (
-            <section className="rounded-xl bg-surface dark:bg-slate-800 p-5 shadow-card">
-              <h2 className="text-sm font-medium text-accent dark:text-cyan-400 uppercase tracking-wide">Profile Picture</h2>
-              <div className="mt-4">
-                <ProfilePictureUpload
-                  studentId={studentId}
-                  currentPictureUrl={profilePicture}
-                  onSuccess={(newUrl) => setProfilePicture(newUrl)}
-                />
-              </div>
-            </section>
-          )}
 
           {confirm ? (
             <section className="rounded-xl border border-ok/20 bg-ok-soft dark:bg-green-900/20 dark:border-green-700 p-5 text-center">
