@@ -2,7 +2,7 @@
 
 ## ✅ Your Admin Account
 
-**Email:** `bardisabas@gmail.com`  
+**Email:** `bardisbas@gmail.com`  
 **Password:** `Speaker88#`
 
 ---

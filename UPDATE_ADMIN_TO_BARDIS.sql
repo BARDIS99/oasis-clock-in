@@ -8,7 +8,7 @@
 -- Step 1: Update admin record in oasis_admins table
 UPDATE oasis_admins 
 SET 
-  email = 'bardisabas@gmail.com',
+  email = 'bardisbas@gmail.com',
   name = 'Bardis Abas'
 WHERE role = 'admin' 
   AND (email = 'admin@oasis.com' OR id LIKE 'admin_%');
@@ -20,7 +20,7 @@ SELECT
   email, 
   role, 
   created_at,
-  '✅ Admin email updated to bardisabas@gmail.com' as status
+  '✅ Admin email updated to bardisbas@gmail.com' as status
 FROM oasis_admins 
 WHERE role = 'admin';
 
@@ -31,7 +31,7 @@ WHERE role = 'admin';
 -- https://supabase.com/dashboard/project/upbocqauwlpnmqfrloqr/auth/users
 --
 -- Click "Add user" → "Create new user"
--- Email: bardisabas@gmail.com
+-- Email: bardisbas@gmail.com
 -- Password: Speaker88#
 -- Auto Confirm User: YES (toggle ON)
 -- Click "Create user"
