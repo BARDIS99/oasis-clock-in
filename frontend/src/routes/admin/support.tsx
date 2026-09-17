@@ -14,7 +14,7 @@ const loadTicketsServer = createServerFn({ method: "GET" })
       .from("oasis_support_tickets")
       .select(`
         *,
-        student:oasis_students(id, name, email, matric, clock_id)
+        student:oasis_students(id, name, email, matric, clock_id, profile_picture_url)
       `)
       .order("created_at", { ascending: false });
 
