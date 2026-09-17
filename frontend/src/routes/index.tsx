@@ -1,16 +1,26 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { QrCode } from "lucide-react";
 import { useEffect, useState } from "react";
 import { StudentShell } from "@/components/student-shell";
+import { QrScannerComponent } from "@/components/qr-scanner";
+import { getOrCreateDeviceToken, saveStudentSession, deviceFingerprint } from "@/lib/device";
+import { getStudentByClock } from "@/lib/server/oasis";
+import { pushToast } from "@/lib/toast";
 
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
+  const navigate = useNavigate();
   const locFromUrl =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("loc") || ""
       : "";
 
   const [mounted, setMounted] = useState(false);
+  const [clockId, setClockId] = useState("");
+  const [showScanner, setShowScanner] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -24,6 +34,58 @@ function Home() {
         </div>
       </StudentShell>
     );
+  }
+
+  async function handleSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    if (!clockId.trim()) return;
+    
+    setBusy(true);
+    setError("");
+    
+    try {
+      const res = await getStudentByClock({
+        data: { clockId: clockId.trim().toUpperCase(), deviceToken: getOrCreateDeviceToken() },
+      });
+      
+      saveStudentSession(res.student.clockId, res.student.id);
+      pushToast("ok", `Welcome back, ${res.student.name}!`);
+      
+      // Redirect to dashboard or appropriate page
+      window.location.href = "/dashboard";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Clock ID not found");
+      pushToast("err", "Clock ID not found or incorrect");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleQrScan(data: string) {
+    setShowScanner(false);
+    
+    try {
+      // Check if it's a Clock ID (OAS-XXXXXX format)
+      const clockIdMatch = data.match(/OAS-[A-Z0-9]{6}/i);
+      if (clockIdMatch) {
+        setClockId(clockIdMatch[0].toUpperCase());
+        pushToast("ok", "Clock ID scanned!");
+        return;
+      }
+      
+      // Check if it's a location URL
+      const url = new URL(data);
+      const loc = url.searchParams.get("loc");
+      
+      if (loc) {
+        // Redirect to register with location
+        navigate({ to: "/register", search: { loc } });
+        pushToast("ok", "Location scanned - redirecting to register...");
+      }
+    } catch {
+      // Not a valid URL or Clock ID
+      pushToast("err", "Invalid QR code");
+    }
   }
 
   return (
@@ -79,6 +141,55 @@ function Home() {
 
         {/* Call to Action */}
         <div className="w-full max-w-md space-y-4 mt-8">
+          {/* Quick Sign In */}
+          <div className="rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-6 shadow-xl">
+            <h2 className="text-center text-lg font-bold text-slate-800 dark:text-white mb-4">
+              Already Have Clock ID?
+            </h2>
+            
+            <form onSubmit={handleSignIn} className="space-y-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={clockId}
+                  onChange={(e) => setClockId(e.target.value.toUpperCase())}
+                  placeholder="Enter Clock ID (OAS-XXXXXX)"
+                  className="h-14 w-full rounded-xl border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 dark:text-white px-4 pr-14 font-mono text-base tracking-wider outline-none focus:border-sky-500 dark:focus:border-cyan-400 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 size-10 grid place-items-center text-sky-600 dark:text-cyan-400 hover:bg-sky-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                  title="Scan QR Code"
+                >
+                  <QrCode className="size-6" />
+                </button>
+              </div>
+              
+              {error && (
+                <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 p-3">
+                  <p className="text-sm text-red-700 dark:text-red-400 text-center">{error}</p>
+                </div>
+              )}
+              
+              <button
+                type="submit"
+                disabled={busy || !clockId.trim()}
+                className="h-14 w-full rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold text-base shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {busy ? "Signing In..." : "Sign In"}
+              </button>
+            </form>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
+            <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">OR</span>
+            <div className="flex-1 h-px bg-slate-300 dark:bg-slate-600"></div>
+          </div>
+
+          {/* Register Button */}
           <Link
             to="/register"
             search={{ loc: locFromUrl || undefined }}
@@ -90,9 +201,17 @@ function Home() {
           </Link>
 
           <p className="text-center text-sm text-slate-500 dark:text-slate-400">
-            Get your Clock ID and start tracking attendance
+            New student? Get your Clock ID and start tracking attendance
           </p>
         </div>
+
+        {/* QR Scanner Modal */}
+        {showScanner && (
+          <QrScannerComponent
+            onScan={handleQrScan}
+            onClose={() => setShowScanner(false)}
+          />
+        )}
 
         {/* Hidden Admin Access */}
         <div className="mt-8">
