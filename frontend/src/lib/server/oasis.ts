@@ -199,11 +199,56 @@ export const registerStudent = createServerFn({ method: "POST" })
     if (!data.deviceToken) throw new Error("This device could not be identified");
 
     const sb = getSupabase();
-    const existing = await sb.from("oasis_students").select("id").eq("email", email).maybeSingle();
-    if (isMissingTable(existing.error)) throw new Error("SCHEMA_MISSING");
-    if (existing.data) {
+    const deviceIp = clientIp();
+    
+    // Check 1: Email already registered
+    const existingEmail = await sb.from("oasis_students").select("id, clock_id").eq("email", email).maybeSingle();
+    if (isMissingTable(existingEmail.error)) throw new Error("SCHEMA_MISSING");
+    if (existingEmail.data) {
       throw new Error(
-        "That email is already registered. Use your Clock ID on this same device, or ask an admin to reassign it.",
+        `This email is already registered with Clock ID: ${existingEmail.data.clock_id}. Use that Clock ID to sign in.`,
+      );
+    }
+    
+    // Check 2: Device token already used (same device)
+    const existingDevice = await sb
+      .from("oasis_students")
+      .select("id, clock_id, name, device_token")
+      .eq("device_token", data.deviceToken)
+      .maybeSingle();
+    
+    if (existingDevice.data) {
+      throw new Error(
+        `This device is already registered to ${existingDevice.data.name} (${existingDevice.data.clock_id}). One device = one student only.`,
+      );
+    }
+    
+    // Check 3: Device fingerprint already used (same physical device)
+    if (data.deviceFp) {
+      const existingFingerprint = await sb
+        .from("oasis_students")
+        .select("id, clock_id, name, device_fp")
+        .eq("device_fp", data.deviceFp)
+        .maybeSingle();
+      
+      if (existingFingerprint.data) {
+        throw new Error(
+          `This device is already registered to ${existingFingerprint.data.name} (${existingFingerprint.data.clock_id}). Cannot register twice.`,
+        );
+      }
+    }
+    
+    // Check 4: IP address already used today (prevent rapid re-registration)
+    const existingIp = await sb
+      .from("oasis_students")
+      .select("id, clock_id, name, device_ip, created_at")
+      .eq("device_ip", deviceIp)
+      .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Last 24 hours
+      .maybeSingle();
+    
+    if (existingIp.data) {
+      throw new Error(
+        `This IP address was used to register ${existingIp.data.name} (${existingIp.data.clock_id}) recently. Wait 24 hours or contact admin.`,
       );
     }
 
@@ -217,7 +262,7 @@ export const registerStudent = createServerFn({ method: "POST" })
       clock_id: clockId,
       device_token: data.deviceToken,
       device_fp: data.deviceFp || "",
-      device_ip: clientIp(),
+      device_ip: deviceIp,
       location_id: data.locationId || null,
       status: "active",
     });
